@@ -14,8 +14,16 @@ var stage;// = new createjs.Stage("cluedoCanvas");
 var startPositions = [[4,0],[14,0],[0,6],[20,10]];
 var board = [];
 var currentPosition;// = {x:,y:};
+var playerPiece, playerAnimator;
 var isTurn = false;
 var trialMoves = [];
+var doorSelected = false;
+var clues;
+var roomContainer;
+var rooms;
+var roomCoords = [];
+var lastClickedDoorCoord;
+var remainingSpaces = 0, diceTotal = 0;
 
 function drawBoard() {
 	var background = new createjs.Shape();
@@ -47,7 +55,7 @@ function drawBoard() {
 			tile.x = (i * (canvasWidth / numTilesWide)) + margin;//tileSize;
 			tile.y = (j * (canvasHeight / numTilesTall)) + margin;
 			stage.addChild(tile);
-			tile.addEventListener("click", onClick);
+			tile.addEventListener("click", onTileClick);
 			//var tcoord = getTileCoord(tile.x, tile.y);
 			//board[tcoord[0]][tcoord[1]] = {t: tile};
 			board[i][j] = {_tile: tile, id: ("aloha"+i+j)};
@@ -59,33 +67,40 @@ function drawBoard() {
 
 function clearMoves() {
 	console.log("number of moves to clear : " + trialMoves.length);
+	console.log("remaining moves : " + remainingSpaces);
+	remainingSpaces = diceTotal;
 	for (i = 0; i < trialMoves.length; i++) {
 		var p = trialMoves[i];
 		console.log("clearing tile " + p.x + ", " + p.y);
 		var obj = board[p.x][p.y];
-			//changeTileColor(obj, "yellow");
-		resetTileColor(obj);//board[p.x][p.y]);
+			//addTempMove(obj, "yellow");
+		//resetTileColor(obj);//board[p.x][p.y]);
+		stage.removeChild(obj._selected);
+
 	}
+	stage.update();
 	lastTrialPosition = currentPosition;
 	trialMoves = [];
-
 	console.log("cleared moves!! " + trialMoves.length)
+	console.log("remaining moves : " + remainingSpaces);
+	
 }
 
-function onClick(evt) {
+function onTileClick(evt) {
 	var p = getTileCoord(evt.stageX, evt.stageY);
-	console.log("hi " + evt.stageX + " " + p.x+ " " + evt.stageY + " " + p.y);
+	console.log("onTileClick: " + evt.stageX + " " + p.x+ " " + evt.stageY + " " + p.y);
 	if (isTurn) {
 		if (isValidMove(p)) {
 			console.log("valid move!!");
 			trialMoves.push(p);
 			lastTrialPosition = p;
-			console.log("size of trialMoves : " + trialMoves.length)
+			console.log("size of trialMoves : " + trialMoves.length);
+			console.log("lastTrialPosition : " + lastTrialPosition.x + ", " + lastTrialPosition.y);
 			//var target = evt.target;
    			//.graphics.clear().beginFill("yellow").drawCircle(0, 0, tileSize / 2).endFill();
 
 			var obj = board[p.x][p.y];
-			changeTileColor(obj, "yellow");
+			addTempMove(obj, "#ffff33");//"yellow");
 			
 			//obj._tile.beginFill("green");
 		} else {
@@ -94,43 +109,143 @@ function onClick(evt) {
 	}
 }
 
-function changeTileColor(obj, color) {
-	obj._tile.graphics.beginFill(color).drawRoundRect(0,0,tileSize-1,tileSize-1,1);
-	stage.update();
 
+function addTempMove(obj, color) {
+	//obj._tile.graphics.beginFill(color).drawRoundRect(0,0,tileSize-1,tileSize-1,1);
+	obj._selected = new createjs.Shape();
+		
+	if (doorSelected) {
+		obj._selected.graphics.beginFill("#FF0").drawPolyStar(3, 3, (tileSize/2), 5, 0.6, -90);
+ 		obj._selected.x = obj._tile.x + (tileSize/2);// + obj._tile.width;
+		obj._selected.y = obj._tile.y + (tileSize/2);// + obj._tile.height;
+	
+	} else {
+		obj._selected.graphics.beginFill(color).drawRoundRect(3,3,(tileSize-6),tileSize-6,4);
+		obj._selected.x = obj._tile.x;
+		obj._selected.y = obj._tile.y;
+	
+	}
+	(obj._selected).addEventListener("click", onTempMoveClick);
+	stage.addChild(obj._selected);
+	stage.update();
+	remainingSpaces--;
+}
+
+function removeTempMove(obj, fromEnd = false) {
+	obj._selected.removeEventListener("click", onTempMoveClick);
+	stage.removeChild(obj._selected);
+	stage.update();
+	if (fromEnd) {
+		trialMoves.pop();
+	} else {
+		trialMoves = trialMoves.slice(1,trialMoves.length - 1);
+	}
+	remainingSpaces++;
+}
+
+function onTempMoveClick(evt) {
+	console.log("onTempMoveClick");
+	var clickCoord = getTileCoord(evt.stageX, evt.stageY);
+	
+	//we can only remove the last move
+	if (clickCoord.x != lastTrialPosition.x || clickCoord.y != lastTrialPosition.y)
+		return;
+	console.log("about to remove temp move");
+	var obj = board[clickCoord.x][clickCoord.y];
+	removeTempMove(obj, true);
+	if (trialMoves.length > 0)
+		lastTrialPosition = trialMoves[trialMoves.length - 1];
+	else
+		lastTrialPosition = currentPosition;
+	console.log("size of trialMoves : " + trialMoves.length);
+			
+	obj["_selected"] = undefined;
 }
 
 function resetTileColor(obj) {
-	changeTileColor(obj, normalTileColor);
+	addTempMove(obj, normalTileColor);
 }
 
 function isValidMove(coord) {
 	console.log("evt: " + coord.x + ", " + coord.y);
 	console.log("currentPosition: " + currentPosition.x + ", " + currentPosition.y);
 
+	if (remainingSpaces <= 0) {
+		console.log("no more moves !!!!");
+		return false;
+	}
+
 	if (//helperIsValid(coord, currentPosition) 
-		 helperIsValid(coord, lastTrialPosition)) {
+		helperIsValid(coord, lastTrialPosition)) {
 		return true;
-	}/*
-	// check that move is valid from current position
-	var xMove, yMove;
-	var numXMove = Math.abs(currentPosition.x - coord.x);
-	if (numXMove == 1)
-		xMove = true;
-	var numYMove = Math.abs(currentPosition.y - coord.y);
-	if (numYMove == 1)
-		yMove = true;
-	// if not diagonal
-	if ((xMove || yMove)
-		&& (
-		(xMove && numYMove == 0)
-		|| (yMove && numXMove == 0))) {
-		return true;
-	}*/
+	}
 	return false;
 }
 
+function makeMove() {
+	// do animation
+	//foreach(tm in trialMoves) {
+	//	moveSpace(playerAnimator, tm);
+	//}
+	//trialMoves.forEach(moveIt);
+	playerAnimator = createjs.Tween.get(playerPiece, {override: true});
+//	
+	for(i = 0; i < trialMoves.length; i++) {
+		moveIt(trialMoves[i], i, playerAnimator);
+	//	var obj = board[trialMoves[i].x][trialMoves[i].y];
+	//	removeTempMove(obj, false);
+		currentPosition = trialMoves[i];
+	}
+	if(doorSelected) {
+		enterRoom();
+	}
+	clearMoves();
+
+}
+
+function moveIt(item, index, playerTween) {
+	console.log("moving it : " + item.x + ", " + item.y + "  " + item + " index: " + index);
+	var dest = getRawCoord(item.x, item.y);
+	console.log("raw coord : " + dest.x + ", " + dest.y);
+//	playerAnimator = createjs.Tween.get(playerPiece, {override: true});
+//	playerAnimator.to({x: dest.x}, 10)
+//				  .to({y: dest.y}, 10);//, createjs.Ease.getPowInOut(4));
+	playerTween.to({x: dest.x, y: dest.y}, 300, createjs.Ease.getPowInOut(4));
+	//playerTween.wait(500);
+	//var obj = board[item.x][item.y];
+	//stage.update();
+	//moveSpace(playerAnimator, trialMoves[index]);
+}
+
+function enterRoom() {
+	var roomMask = new createjs.Shape();
+	roomMask.graphics.beginFill("red").drawRoundRect(0,0,canvasWidth,canvasHeight,4);
+	roomMask.x = 0;
+	roomMask.y = 0;
+	roomMask.mouseChildren = false;
+	stage.addChild(roomMask);
+
+	/*// which room?
+	//forEach(var room in roomCoords) {
+	for(var i = 0; i < roomCoords.length; i++)
+		if (lastClickedDoorCoord.x > room[i].leftX && lastClickedDoorCoord.x < room[i].rightX
+			&& lastClickedDoorCoord.y > room[i].topY && lastClickedDoorCoord.y < room[i].bottomY) {
+
+		}
+	}*/
+
+	//var results = Container.getObjectsUnderPoint();
+
+	//stage.removeEventListener("dblclick", clearMoves);
+}
+
+function isTurn() {
+	return true;
+}
+
 function helperIsValid(coord, lastPosition) {
+	if (doorSelected)
+		return false;
 	var xMove, yMove;
 	var numXMove = Math.abs(lastPosition.x - coord.x);
 	if (numXMove == 1)
@@ -153,7 +268,13 @@ function getTileCoord(x, y) {
 	return {x: tx, y: ty};
 }
 
-function addRoom(x, y, w, h, color, loc) {
+function getRawCoord(x, y) {
+	var rx = (tileSpace * x) + (tileSpace/2);
+	var ry = (tileSpace * y) + (tileSpace/2);
+	return {x: rx, y: ry};
+}
+
+function addRoom(x, y, w, h, color, loc, name) {
 	var room = new createjs.Shape();
 	var roomX = x * tileSpace;
 	var roomY = y * tileSpace;
@@ -163,6 +284,14 @@ function addRoom(x, y, w, h, color, loc) {
 	room.x = roomX;
 	room.y = roomY;
 	this.stage.addChild(room);
+	//roomContainer.addChild(room);
+	roomCoords[name] = {leftX: x, rightX: x+w, topY: y, bottomY: y+h};
+
+	var text = new createjs.Text(name, "20px Arial", "#101010");//"black");//"#ff7700");
+ 	text.x = room.x + (roomWidth/8);
+ 	text.y = room.y + (roomHeight/2) + 6;
+ 	text.textBaseline = "alphabetic";
+ 	stage.addChild(text);
 
 	// remove even listeners from tiles underneath room
 	var roomTC = getTileCoord(roomX, roomY);
@@ -173,7 +302,7 @@ function addRoom(x, y, w, h, color, loc) {
 			var obj = board[roomTC.x+iw][roomTC.y+ih];
 			//alert(obj.id);
 			if (obj !== undefined && obj.hasOwnProperty("_tile") && obj._tile !== undefined) {
-				obj._tile.removeEventListener("click", onClick);
+				obj._tile.removeEventListener("click", onTileClick);
 				console.log("removing listeners on room " + (roomTC.x+iw) + ", " + (roomTC.y+ih));
 			
 			} else {
@@ -183,7 +312,7 @@ function addRoom(x, y, w, h, color, loc) {
 		}
 	}
 	//console.log("removing listeners on room " + roomTC[0] + ", " + roomTC[1]);
-	//board[roomTC[0]][roomTC[1]].tile.removeEventListener("click", onClick);
+	//board[roomTC[0]][roomTC[1]].tile.removeEventListener("click", onTileClick);
 
 	// add door
 	var doorWidth, doorHeight, doorX, doorY;
@@ -192,30 +321,30 @@ function addRoom(x, y, w, h, color, loc) {
 
 	switch (loc) {
 		case "left" : 
-				doorX = roomX - (doorNarrow/2);//room.x / 2;
-				doorY = roomY;
+				doorX = roomX;// + doorNarrow;//room.x / 2;
+				doorY = roomY + tileSpace;
 				doorWidth = doorNarrow;
 				doorHeight = doorWide;
 			break;
 
 		case "right" :
-				doorX = roomX + roomWidth - (doorNarrow/2);//((room.x * tileSpace)+ room.w)  - doorNarrow;
+				doorX = roomX + roomWidth - doorNarrow;//((room.x * tileSpace)+ room.w)  - doorNarrow;
 				//alert("room x : " + roomX);
-				doorY = roomY;
+				doorY = roomY + tileSpace;
 				doorWidth = doorNarrow;
 				doorHeight = doorWide;
 				break;
 
 		case "top" :
-				doorX = roomX;
-				doorY = roomY - (doorNarrow/2);
+				doorX = roomX + tileSpace;
+				doorY = roomY;// + doorNarrow;
 				doorWidth = doorWide;
 				doorHeight = doorNarrow;
 				break;
 
 		case "bottom" :
-				doorX = roomX;
-				doorY = roomY + roomHeight - (doorNarrow/2);
+				doorX = roomX + tileSpace;
+				doorY = roomY + roomHeight - doorNarrow;
 				doorWidth = doorWide;
 				doorHeight = doorNarrow;
 				//alert("x: " + doorX + " y: " + doorY + "w: " + doorWidth + " h: " + doorHeight);
@@ -232,9 +361,34 @@ function addRoom(x, y, w, h, color, loc) {
 	door.graphics.beginFill("black").drawRoundRect(0,0,doorWidth, doorHeight, 2);
 	door.x = doorX;// tileSpace;
 	door.y = doorY;// * tileSpace;
+	door.addEventListener("click", onDoorClick);
 	this.stage.addChild(door);
 }
 
+function onDoorClick(evt) {
+	var p = getTileCoord(evt.stageX, evt.stageY);
+	lastClickedDoorCoord = p;
+	console.log("~~onDoorClick: " + evt.stageX + " " + p.x+ " " + evt.stageY + " " + p.y);
+	if (isTurn) {
+		if (isValidMove(p)) {
+			console.log("valid door move!!");
+			doorSelected = true;
+			//trialMoves.push(p);
+			lastTrialPosition = p;
+			console.log("size of trialMoves : " + trialMoves.length);
+			console.log("lastTrialPosition : " + lastTrialPosition.x + ", " + lastTrialPosition.y);
+			//var target = evt.target;
+   			//.graphics.clear().beginFill("yellow").drawCircle(0, 0, tileSize / 2).endFill();
+
+			var obj = board[p.x][p.y];
+			addTempMove(obj, "#ffff33");//"yellow");
+			
+			//obj._tile.beginFill("green");
+		} else {
+			console.log("not a valid move!");
+		}
+	}
+}
 
 function init() {
 	var canvas = document.getElementById("cluedoCanvas");
@@ -242,37 +396,44 @@ function init() {
 	canvas.height = canvasHeight;
 
 	stage = new createjs.Stage("cluedoCanvas");
+	roomContainer = new createjs.Container();
 
 	drawBoard();
-	addRoom(5, 0, 8, 3, "brown", "bottom");
-	addRoom(0,0,3,5,"green", "right");
-	addRoom(0, 10, 5, 3, "blue", "top");
-	addRoom(8,10,5,3,"red", "right");
-	addRoom(17,5,3,4,"orange", "top");
-	addRoom(11,4,3,5,"cyan", "bottom");
-	addRoom(4,5,5,3,"yellow", "top");
-	addRoom(15,0,5,4,"fuchsia", "left");
-	addRoom(15,10,5,3,"purple", "top");
+	addRoom(5, 0, 8, 3, "brown", "bottom", "Ball Room");
+	addRoom(0,0,3,5,"green", "right","Kitchen");
+	addRoom(0, 10, 5, 3, "blue", "right","Lounge");
+	addRoom(8,10,5,3,"red", "top","Hall");
+	
+	addRoom(0,6,5,3,"#99FF66", "right","Dining Room");//light green
+	addRoom(15,0,5,2,"fuchsia", "bottom","Conservatory");
+	addRoom(15,3,5,2,"orange", "top","Billiard Room");
+	addRoom(15,6,5,3,"cyan", "left","Library");
+	
+	addRoom(15,10,5,3,"purple", "top","Study");
 
 	// add user
-	var circle = new createjs.Shape();
-    circle.graphics.beginFill("Crimson").drawCircle(0, 0, tileSize / 2);
-    setStartPosition(circle, startPositions[0]);
-    stage.addChild(circle);
-    var anim = createjs.Tween.get(circle, {loop: true});
-    moveSpace(circle,anim);
+	playerPiece = new createjs.Shape();
+    playerPiece.graphics.beginFill("Crimson").drawCircle(0, 0, tileSize / 2);
+    setStartPosition(playerPiece, startPositions[0]);
+    stage.addChild(playerPiece);
+   stage.update();
+   playerAnimator = createjs.Tween.get(playerPiece, {useTicks: true});//, {loop: true});
+//    moveSpace(playerPiece,anim);
           
- //   createjs.Ticker.setFPS(60);
-  //  createjs.Ticker.addEventListener("tick", stage);
+    createjs.Ticker.setFPS(600);
+    createjs.Ticker.addEventListener("tick", stage);
 	
-	stage.update();
+	
 
 	isTurn = true;
 }
 
-function moveSpace(circle, a) {
+function moveSpace(dest) {
 	//alert(circle.x);
-	a.to({x: circle.x + tileSpace}, 1000, createjs.Ease.getPowInOut(4));
+	console.log("moveSpace: " + dest.x + ", " + dest.y);
+//	playerAnimator = createjs.Tween.get(playerPiece);//, {loop: true});
+	playerAnimator.to({x: dest.x + tileSpace, y: dest.y + tileSpace}, 10, createjs.Ease.getPowInOut(4));
+	stage.update();
          /* .to({alpha: 0, y: 75}, 500, createjs.Ease.getPowInOut(2))
           .to({alpha: 0, y: 125}, 100)
           .to({alpha: 1, y: 100}, 500, createjs.Ease.getPowInOut(2))
@@ -286,6 +447,13 @@ function setStartPosition(circle, pos) {
 	lastTrialPosition = currentPosition;
 }
 
+function setPlayerPosition(pos) {
+	circle.x = (tileSpace * pos.x) + (tileSpace/2);
+	circle.y = (tileSpace * pos.y) + (tileSpace/2);
+	currentPosition = {x: pos.x, y: pos.y};
+	lastTrialPosition = currentPosition;
+}
+
 function startTurn() {
 	isTurn = true;
 }
@@ -294,3 +462,18 @@ function endTurn() {
 	isTurn = false;
 }
 
+function rollDice(){
+    var die1 = document.getElementById("die1");
+    var die2 = document.getElementById("die2");
+    var status = document.getElementById("status");
+    var d1 = Math.floor(Math.random()* 6) + 1 ;
+    var d2 = Math.floor(Math.random()* 6) + 1;
+    diceTotal = d1 + d2;
+    remainingSpaces = diceTotal;
+    die1.innerHTML = d1;
+    die2.innerHTML = d2;
+    status.innerHTML = "You can move "+diceTotal+" spaces.";
+    if(d1 == d2){
+        status.innerHTML += " DOUBLES! What luck you have. Too bad it doesn't mean anything... "
+    }
+}

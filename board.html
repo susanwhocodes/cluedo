@@ -1,14 +1,27 @@
 
-
+<!DOCTYPE html>
 <html>
   <head>
     <script src="https://code.createjs.com/createjs-2015.11.26.min.js"></script>
     <script src="https://code.createjs.com/tweenjs-0.6.2.min.js"></script>
     <script src="cluedo.js"></script>
-    
+    <link rel="stylesheet" type="text/css" href="cluedo.css">
+</style>
+<script>
+
+
+</script>
   </head>
   <body onload="init();">
     <canvas id="cluedoCanvas"></canvas>
+    <div id="controls">
+      
+      <button id="makeMove" onclick="makeMove();">Make Your Move</button>
+
+    </div>
+    <div id="die1" class="dice">0</div>
+    <div id="die2" class="dice">0</div>
+    <button onclick="rollDice()"> Roll Dice</button>
+    <h2 id="status" style="clear:left;"></h2>
   </body>
 </html>
-
