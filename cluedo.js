@@ -24,6 +24,11 @@ var rooms;
 var roomCoords = [];
 var lastClickedDoorCoord;
 var remainingSpaces = 0, diceTotal = 0;
+var currentFactIndex = 0;
+var facts = ["Fact 1",
+			"Number 2",
+			"Three!",
+			"Four!!!"];
 
 function drawBoard() {
 	var background = new createjs.Shape();
@@ -169,6 +174,7 @@ function resetTileColor(obj) {
 function isValidMove(coord) {
 	console.log("evt: " + coord.x + ", " + coord.y);
 	console.log("currentPosition: " + currentPosition.x + ", " + currentPosition.y);
+	console.log("remaining spaces : " + remainingSpaces);
 
 	if (remainingSpaces <= 0) {
 		console.log("no more moves !!!!");
@@ -199,7 +205,7 @@ function makeMove() {
 	if(doorSelected) {
 		enterRoom();
 	}
-	clearMoves();
+	resetTurn();
 
 }
 
@@ -218,12 +224,48 @@ function moveIt(item, index, playerTween) {
 }
 
 function enterRoom() {
+	
 	var roomMask = new createjs.Shape();
-	roomMask.graphics.beginFill("red").drawRoundRect(0,0,canvasWidth,canvasHeight,4);
+	roomMask.graphics.beginFill("maroon").drawRoundRect(0,0,canvasWidth,canvasHeight,4);
 	roomMask.x = 0;
 	roomMask.y = 0;
 	roomMask.mouseChildren = false;
-	stage.addChild(roomMask);
+	roomContainer.addChild(roomMask);
+	
+	var t = currentFactIndex < facts.length ? facts[currentFactIndex] : "You win!";
+	currentFactIndex++;
+	console.log("fact: " + t);
+	var text = new createjs.Text(t, "20px Arial", "#ff7700");
+ 	text.x = 100;
+ 	text.y = 100;
+ 	text.textBaseline = "alphabetic";
+ 	roomContainer.addChild(text);
+	stage.addChild(roomContainer);//roomMask);
+
+ 	var buttonContainer = new createjs.Container();
+
+ 	var button = new createjs.Shape();
+ 	button.graphics.beginFill("blue").drawRoundRect(0, 0, 100, 30,4);
+ 	button.x = canvasWidth/2 - 50;
+ 	button.y = canvasHeight * (3/4);
+ 	 stage.addChild(button);
+
+ 	var buttonLabel = new createjs.Text("Ok", "20px Arial", "#ff7700");
+ 	buttonLabel.x = button.x + 50;
+ 	buttonLabel.y = button.y + 15;
+ 	buttonLabel.textBaseline = "middle";
+ 	buttonLabel.textAlign = "center";
+ 	stage.addChild(buttonLabel);
+
+ 	buttonContainer.addChild(button);
+ 	buttonContainer.addChild(buttonLabel);
+ 	stage.addChild(buttonContainer);
+
+	console.log("button coord : " + button.x + ", " + button.y + " on " + canvasWidth + " x " + canvasHeight);
+	buttonContainer.addEventListener("click", handleFactButtonClick);
+
+	resetTurn();
+
 
 	/*// which room?
 	//forEach(var room in roomCoords) {
@@ -238,6 +280,19 @@ function enterRoom() {
 
 	//stage.removeEventListener("dblclick", clearMoves);
 }
+function handleFactButtonClick(event) {
+     // Click Happened.
+     console.log("fact button click!");
+     stage.removeChild(event.target.parent);
+     stage.removeChild(roomContainer);
+ }
+
+ function resetTurn() {
+ 	doorSelected = false;
+resetDie();
+
+	clearMoves();
+ }
 
 function isTurn() {
 	return true;
@@ -284,7 +339,6 @@ function addRoom(x, y, w, h, color, loc, name) {
 	room.x = roomX;
 	room.y = roomY;
 	this.stage.addChild(room);
-	//roomContainer.addChild(room);
 	roomCoords[name] = {leftX: x, rightX: x+w, topY: y, bottomY: y+h};
 
 	var text = new createjs.Text(name, "20px Arial", "#101010");//"black");//"#ff7700");
@@ -476,4 +530,16 @@ function rollDice(){
     if(d1 == d2){
         status.innerHTML += " DOUBLES! What luck you have. Too bad it doesn't mean anything... "
     }
+}
+
+function resetDie() {
+	 var die1 = document.getElementById("die1");
+    var die2 = document.getElementById("die2");
+    var status = document.getElementById("status");
+    diceTotal = 0;
+    remainingSpaces = diceTotal;
+    die1.innerHTML = 0;
+    die2.innerHTML = 0;
+    status.innerHTML = "You can move "+diceTotal+" spaces.";
+    
 }

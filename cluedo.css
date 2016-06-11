@@ -8,3 +8,8 @@ div.dice{
     text-align:center;
     margin:5px;
 }
+
+#makeMove,#dieControls{
+	
+	display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px;
+}

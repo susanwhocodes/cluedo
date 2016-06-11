@@ -15,13 +15,19 @@
   <body onload="init();">
     <canvas id="cluedoCanvas"></canvas>
     <div id="controls">
+      <div id="dieControls">
+        <div id="die1" class="dice">0</div>
+        <div id="die2" class="dice">0</div>
+        <button onclick="rollDice()"> Roll Dice</button>
+        <h2 id="status" style="clear:left;"></h2> 
+      </div>
+      
       
       <button id="makeMove" onclick="makeMove();">Make Your Move</button>
 
     </div>
-    <div id="die1" class="dice">0</div>
-    <div id="die2" class="dice">0</div>
-    <button onclick="rollDice()"> Roll Dice</button>
-    <h2 id="status" style="clear:left;"></h2>
+    
+
+    <div id="remainingMoves"></div>
   </body>
 </html>
