@@ -22,6 +22,9 @@ div.dice{
 	display: none;
 }
 
+button {
+	vertical-align: top;
+}
 #div1 {
 
         display: none;

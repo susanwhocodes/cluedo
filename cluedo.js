@@ -637,13 +637,15 @@ function chooseCharacter() {
 	var divs = ["WomanInSuit","WomanCrossingArms", "WomanStaringEmotional", "ManWithBucket", "ManInScrubs", "ManStaringIntoYourSoul"];
 	for(var i = 0; i < divs.length; i++) {
 		var el = document.getElementById(divs[i]);
-		el.style.display = choice == divs[i] ? "block" : "none";
+		el.style.display = choice == divs[i] ? "inline" : "none";
 		chooseChar.disabled = true;
 		chooseChar.style.display = "none";
 	}
 	var c = document.getElementById("cluedoCanvas");
 	c.style.display = "inline-table";
 	characterSelection.style.float = "right";
+	//document.body.width = canvasWidth + 200;
+	characterSelection.top = 0;
 	var dc = document.getElementById("dieControls");
 	dc.style.display = "inline-table";
 	var mm = document.getElementById("makeMove");
