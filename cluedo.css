@@ -9,7 +9,40 @@ div.dice{
     margin:5px;
 }
 
-#makeMove,#dieControls{
-	
-	display: inline-block; *display: inline; zoom: 1; vertical-align: top; font-size: 12px;
+#makeMove, #dieControls{
+	/*display: inline-block; *display: inline; */
+	display: none;
+	zoom: 1; vertical-align: top; font-size: 12px;
+}
+
+#controls {
+	width: 350px;
+}
+#cluedoCanvas, #chooseChar {
+	display: none;
+}
+
+#div1 {
+
+        display: none;
+}
+
+#div2 {
+        display: none;
+}
+
+#div3 {
+        display:none;
+}
+
+#div4 {
+        display: none;
+}
+
+#div5 {
+        display:none;
+}
+
+#div6 {
+        display: none;
 }

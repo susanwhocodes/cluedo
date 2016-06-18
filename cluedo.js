@@ -25,10 +25,12 @@ var roomCoords = [];
 var lastClickedDoorCoord;
 var remainingSpaces = 0, diceTotal = 0;
 var currentFactIndex = 0;
-var facts = ["Fact 1",
-			"Number 2",
-			"Three!",
-			"Four!!!"];
+var facts = ["Fourty percent of women who leave STEM professions state  a \"macho\" culture as the reason to leave. ",
+			"Women are put off from certain jobs, because when they get into said job, their presence is talked about, merely because they are an oddity in the profession.",
+			"In certain fields, women perform better than men, yet are put off by the men boasting about how well they did, and the \"masculine\" stereotypes surrounding the jobs.",
+			"However, even among women who begin a science-related career, more than half leave by mid-career, double the rate of men.", "The gender bias coerces people into believing that women's labour isn't worth as much as men's labour. Women are taught from a young age, although it has gotten better in recent years, that nursing, education, and childcare are \"feminine\" jobs, and to earn a decent amount of money in male-dominated jobs, such as construction, finance, and business is near impossible. However, we can change that by promoting equality, and to make sure that girls don't feel that any job is impossible for them to achieve." ];
+
+var WIS,WCA,WSE,MIS,MSIYS,MWB, characterSelection, chooseChar, choice; 
 
 function drawBoard() {
 	var background = new createjs.Shape();
@@ -236,8 +238,9 @@ function enterRoom() {
 	currentFactIndex++;
 	console.log("fact: " + t);
 	var text = new createjs.Text(t, "20px Arial", "#ff7700");
+	text.lineWidth = 400;
  	text.x = 100;
- 	text.y = 100;
+ 	text.y = 50;
  	text.textBaseline = "alphabetic";
  	roomContainer.addChild(text);
 	stage.addChild(roomContainer);//roomMask);
@@ -477,9 +480,17 @@ function init() {
     createjs.Ticker.setFPS(600);
     createjs.Ticker.addEventListener("tick", stage);
 	
-	
-
 	isTurn = true;
+
+	WIS = document.getElementById("div1");
+	WCA = document.getElementById("div2");
+	WSE = document.getElementById("div3");
+	MIS = document.getElementById("div4");
+	MSIYS = document.getElementById("div5");
+	MWB = document.getElementById("div6");
+	characterSelection = document.getElementById("characterSelection");
+	characterSelection.width = canvasWidth;
+	chooseChar = document.getElementById("chooseChar");
 }
 
 function moveSpace(dest) {
@@ -542,4 +553,102 @@ function resetDie() {
     die2.innerHTML = 0;
     status.innerHTML = "You can move "+diceTotal+" spaces.";
     
+}
+
+
+function sayHello() {
+	choice = "WomanInSuit";
+	WIS.style.display = "block";
+	WCA.style.display = "none";
+	WSE.style.display = "none";
+	MIS.style.display = "none";
+	MSIYS.style.display = "none";
+	MWB.style.display = "none";
+	chooseChar.style.display = "inline";
+	chooseChar.disabled = false;
+}
+
+function sayHello2() {
+	choice = "WomanCrossingArms";
+	WCA.style.display = "block";
+	WIS.style.display = "none";
+	WSE.style.display = "none";
+	MIS.style.display = "none";
+	MSIYS.style.display = "none";
+	MWB.style.display = "none";
+	chooseChar.style.display = "inline";
+	chooseChar.disabled = false;
+
+}
+function sayHello3() {
+	choice = "WomanStaringEmotional";
+	WSE.style.display = "block";
+	WCA.style.display = "none";
+	WIS.style.display = "none";
+	MIS.style.display = "none";
+	MSIYS.style.display = "none";
+	MWB.style.display = "none";
+	chooseChar.style.display = "inline";
+	chooseChar.disabled = false;
+}
+
+
+function sayHello4() {
+	choice = "ManWithBucket";
+	MIS.style.display = "block"
+	WCA.style.display = "none";
+	WIS.style.display = "none";
+	WSE.style.display = "none";
+	MSIYS.style.display = "none";
+	MWB.style.display = "none";
+	chooseChar.style.display = "inline";
+	chooseChar.disabled = false;
+}
+function sayHello5() {
+	choice="ManInScrubs";
+	MSIYS.style.display = "block";
+	WCA.style.display = "none";
+	WIS.style.display = "none";
+	WSE.style.display = "none";
+	MIS.style.display = "none";
+	MWB.style.display = "none";
+	chooseChar.style.display = "inline";
+	chooseChar.disabled = false;
+}
+
+function sayHello6() {
+	choice = "ManStaringIntoYourSoul";
+	MWB.style.display = "block";
+	WCA.style.display = "none";
+	WIS.style.display = "none";
+	WSE.style.display = "none";
+	MIS.style.display = "none";
+	MSIYS.style.display = "none";
+	chooseChar.style.display = "inline";
+	chooseChar.disabled = false;
+}
+
+function chooseCharacter() {
+	
+	console.log("choice : " + choice);
+	if (!choice)
+		return;
+	console.log("choice : " + choice);
+	var divs = ["WomanInSuit","WomanCrossingArms", "WomanStaringEmotional", "ManWithBucket", "ManInScrubs", "ManStaringIntoYourSoul"];
+	for(var i = 0; i < divs.length; i++) {
+		var el = document.getElementById(divs[i]);
+		el.style.display = choice == divs[i] ? "block" : "none";
+		chooseChar.disabled = true;
+		chooseChar.style.display = "none";
+	}
+	var c = document.getElementById("cluedoCanvas");
+	c.style.display = "inline-table";
+	characterSelection.style.float = "right";
+	var dc = document.getElementById("dieControls");
+	dc.style.display = "inline-table";
+	var mm = document.getElementById("makeMove");
+	mm.style.display = "inline-table";
+	mm.style.float = "right";
+	mm.style.position = "relative";
+	mm.style.top = 0;
 }
